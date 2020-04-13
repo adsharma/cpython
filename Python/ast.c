@@ -156,6 +156,12 @@ validate_constant(PyObject *value)
 }
 
 static int
+validate_body(asdl_seq *body, const char *owner)
+{
+    return validate_nonempty_seq(body, "body", owner) && validate_stmts(body);
+}
+
+static int
 validate_expr(expr_ty exp, expr_context_ty ctx)
 {
     int check_ctx = 1;
@@ -241,6 +247,9 @@ validate_expr(expr_ty exp, expr_context_ty ctx)
         return validate_comprehension(exp->v.DictComp.generators) &&
             validate_expr(exp->v.DictComp.key, Load) &&
             validate_expr(exp->v.DictComp.value, Load);
+    case PmatchExpr_kind:
+        return validate_expr(exp->v.PmatchExpr.key, Load) &&
+               validate_body(exp->v.PmatchExpr.body, "Pmatch");
     case Yield_kind:
         return !exp->v.Yield.value || validate_expr(exp->v.Yield.value, Load);
     case YieldFrom_kind:
@@ -316,12 +325,6 @@ validate_assignlist(asdl_seq *targets, expr_context_ty ctx)
 {
     return validate_nonempty_seq(targets, "targets", ctx == Del ? "Delete" : "Assign") &&
         validate_exprs(targets, ctx, 0);
-}
-
-static int
-validate_body(asdl_seq *body, const char *owner)
-{
-    return validate_nonempty_seq(body, "body", owner) && validate_stmts(body);
 }
 
 static int
@@ -2642,6 +2645,70 @@ ast_for_factor(struct compiling *c, const node *n)
     return NULL;
 }
 
+static pmatchcase_ty
+ast_for_pmatch_case(struct compiling *c, const node *n)
+{
+    expr_ty expression;
+    asdl_seq *suite_seq;
+
+    REQ(n, pmatch_case);
+    expression = ast_for_testlist(c, CHILD(n, 0));
+    if (!expression)
+        return NULL;
+    suite_seq = ast_for_suite(c, CHILD(n, 2));
+    if (!suite_seq)
+        return NULL;
+    return PmatchCase(expression, suite_seq, c->c_arena);
+}
+
+static asdl_seq *
+ast_for_pmatch_body(struct compiling *c, const node *n)
+{
+    /*
+     * pmatch_body: NEWLINE [TYPE_COMMENT NEWLINE] INDENT pmatch_case+ DEDENT
+     * pmatch_case: testlist_star_expr ':' func_body_suite
+     */
+
+    int i, total, pos = 0;
+    asdl_seq *seq;
+
+    REQ(n, pmatch_body);
+
+    total = NCH(n);
+    seq = _Py_asdl_seq_new(total, c->c_arena);
+    if (!seq)
+        return NULL;
+
+
+    /* TODO: revisit more robust handling here */
+    for (i = 2; i < NCH(n) - 1; i++) {
+        node *pmcase = CHILD(n, i);
+        if (!pmcase)
+            return NULL;
+        pmatchcase_ty s = ast_for_pmatch_case(c, pmcase);
+        if (!s)
+            return NULL;
+        asdl_seq_SET(seq, pos++, s);
+    }
+    return seq;
+}
+
+static expr_ty
+ast_for_pmatch_expr(struct compiling *c, const node *n)
+{
+    expr_ty key_expr;
+    asdl_seq *body_expr;
+    REQ(n, pmatch_expr);
+    assert(NCH(n) == 4);
+    /* pmatch_expr: 'pmatch'  testlist_star_expr ':' pmatch_body */
+
+    key_expr = ast_for_testlist(c, CHILD(n, 1));
+    body_expr = ast_for_pmatch_body(c, CHILD(n, 3));
+    return PmatchExpr(key_expr, body_expr, LINENO(n), n->n_col_offset,
+                   n->n_end_lineno, n->n_end_col_offset,
+                   c->c_arena);
+}
+
 static expr_ty
 ast_for_atom_expr(struct compiling *c, const node *n)
 {
@@ -2659,6 +2726,8 @@ ast_for_atom_expr(struct compiling *c, const node *n)
         }
         start = 1;
         assert(nch > 1);
+    } else if (TYPE(CHILD(n, 0)) == pmatch_expr) {
+        return ast_for_pmatch_expr(c, CHILD(n, 0));
     }
 
     e = ast_for_atom(c, CHILD(n, start));

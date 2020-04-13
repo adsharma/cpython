@@ -5044,6 +5044,9 @@ compiler_visit_expr1(struct compiler *c, expr_ty e)
         return compiler_list(c, e);
     case Tuple_kind:
         return compiler_tuple(c, e);
+    case PmatchExpr_kind:
+	/* AST rewriters transform pmatch */
+        return 1;
     }
     return 1;
 }

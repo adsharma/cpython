@@ -13,6 +13,8 @@ extern "C" {
 
 typedef struct _mod *mod_ty;
 
+typedef struct _pmatchcase *pmatchcase_ty;
+
 typedef struct _stmt *stmt_ty;
 
 typedef struct _expr *expr_ty;
@@ -69,6 +71,18 @@ struct _mod {
             asdl_seq *argtypes;
             expr_ty returns;
         } FunctionType;
+
+    } v;
+};
+
+enum _pmatchcase_kind {PmatchCase_kind=1};
+struct _pmatchcase {
+    enum _pmatchcase_kind kind;
+    union {
+        struct {
+            expr_ty pmcase;
+            asdl_seq *body;
+        } PmatchCase;
 
     } v;
 };
@@ -226,11 +240,12 @@ struct _stmt {
 enum _expr_kind {BoolOp_kind=1, NamedExpr_kind=2, BinOp_kind=3, UnaryOp_kind=4,
                   Lambda_kind=5, IfExp_kind=6, Dict_kind=7, Set_kind=8,
                   ListComp_kind=9, SetComp_kind=10, DictComp_kind=11,
-                  GeneratorExp_kind=12, Await_kind=13, Yield_kind=14,
-                  YieldFrom_kind=15, Compare_kind=16, Call_kind=17,
-                  FormattedValue_kind=18, JoinedStr_kind=19, Constant_kind=20,
-                  Attribute_kind=21, Subscript_kind=22, Starred_kind=23,
-                  Name_kind=24, List_kind=25, Tuple_kind=26, Slice_kind=27};
+                  GeneratorExp_kind=12, PmatchExpr_kind=13, Await_kind=14,
+                  Yield_kind=15, YieldFrom_kind=16, Compare_kind=17,
+                  Call_kind=18, FormattedValue_kind=19, JoinedStr_kind=20,
+                  Constant_kind=21, Attribute_kind=22, Subscript_kind=23,
+                  Starred_kind=24, Name_kind=25, List_kind=26, Tuple_kind=27,
+                  Slice_kind=28};
 struct _expr {
     enum _expr_kind kind;
     union {
@@ -295,6 +310,11 @@ struct _expr {
             expr_ty elt;
             asdl_seq *generators;
         } GeneratorExp;
+
+        struct {
+            expr_ty key;
+            asdl_seq *body;
+        } PmatchExpr;
 
         struct {
             expr_ty value;
@@ -465,6 +485,8 @@ mod_ty _Py_Interactive(asdl_seq * body, PyArena *arena);
 mod_ty _Py_Expression(expr_ty body, PyArena *arena);
 #define FunctionType(a0, a1, a2) _Py_FunctionType(a0, a1, a2)
 mod_ty _Py_FunctionType(asdl_seq * argtypes, expr_ty returns, PyArena *arena);
+#define PmatchCase(a0, a1, a2) _Py_PmatchCase(a0, a1, a2)
+pmatchcase_ty _Py_PmatchCase(expr_ty pmcase, asdl_seq * body, PyArena *arena);
 #define FunctionDef(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) _Py_FunctionDef(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 stmt_ty _Py_FunctionDef(identifier name, arguments_ty args, asdl_seq * body,
                         asdl_seq * decorator_list, expr_ty returns, string
@@ -602,6 +624,10 @@ expr_ty _Py_DictComp(expr_ty key, expr_ty value, asdl_seq * generators, int
 expr_ty _Py_GeneratorExp(expr_ty elt, asdl_seq * generators, int lineno, int
                          col_offset, int end_lineno, int end_col_offset,
                          PyArena *arena);
+#define PmatchExpr(a0, a1, a2, a3, a4, a5, a6) _Py_PmatchExpr(a0, a1, a2, a3, a4, a5, a6)
+expr_ty _Py_PmatchExpr(expr_ty key, asdl_seq * body, int lineno, int
+                       col_offset, int end_lineno, int end_col_offset, PyArena
+                       *arena);
 #define Await(a0, a1, a2, a3, a4, a5) _Py_Await(a0, a1, a2, a3, a4, a5)
 expr_ty _Py_Await(expr_ty value, int lineno, int col_offset, int end_lineno,
                   int end_col_offset, PyArena *arena);

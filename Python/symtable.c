@@ -1592,6 +1592,10 @@ symtable_visit_expr(struct symtable *st, expr_ty e)
         if (!symtable_visit_dictcomp(st, e))
             VISIT_QUIT(st, 0);
         break;
+    case PmatchExpr_kind:
+        VISIT(st, expr, e->v.PmatchExpr.key);
+        VISIT_SEQ(st, expr, e->v.PmatchExpr.body);
+        break;
     case Yield_kind:
         if (e->v.Yield.value)
             VISIT(st, expr, e->v.Yield.value);

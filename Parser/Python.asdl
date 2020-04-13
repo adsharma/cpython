@@ -8,6 +8,8 @@ module Python
         | Expression(expr body)
         | FunctionType(expr* argtypes, expr returns)
 
+    pmatchcase = PmatchCase(expr pmcase, stmt* body)
+
     stmt = FunctionDef(identifier name, arguments args,
                        stmt* body, expr* decorator_list, expr? returns,
                        string? type_comment)
@@ -64,6 +66,7 @@ module Python
          | SetComp(expr elt, comprehension* generators)
          | DictComp(expr key, expr value, comprehension* generators)
          | GeneratorExp(expr elt, comprehension* generators)
+         | PmatchExpr(expr key, pmatchcase* body)
          -- the grammar constrains where yield expressions can occur
          | Await(expr value)
          | Yield(expr? value)
