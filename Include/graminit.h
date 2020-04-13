@@ -88,7 +88,11 @@
 #define encoding_decl 341
 #define yield_expr 342
 #define yield_arg 343
-#define func_body_suite 344
-#define func_type_input 345
-#define func_type 346
-#define typelist 347
+#define pmatch_stmt 344
+#define pmatch_expr 345
+#define pmatch_body 346
+#define pmatch_case 347
+#define func_body_suite 348
+#define func_type_input 349
+#define func_type 350
+#define typelist 351

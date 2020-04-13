@@ -148,7 +148,7 @@ arith_expr: term (('+'|'-') term)*
 term: factor (('*'|'@'|'/'|'%'|'//') factor)*
 factor: ('+'|'-'|'~') factor | power
 power: atom_expr ['**' factor]
-atom_expr: [AWAIT] atom trailer*
+atom_expr: [AWAIT] atom trailer* | pmatch_expr
 atom: ('(' [yield_expr|testlist_comp] ')' |
        '[' [testlist_comp] ']' |
        '{' [dictorsetmaker] '}' |
@@ -194,6 +194,11 @@ encoding_decl: NAME
 
 yield_expr: 'yield' [yield_arg]
 yield_arg: 'from' test | testlist_star_expr
+
+pmatch_stmt: pmatch_expr
+pmatch_expr: 'pmatch'  testlist_star_expr ':' pmatch_body
+pmatch_body: NEWLINE [TYPE_COMMENT NEWLINE] INDENT pmatch_case+ DEDENT
+pmatch_case: testlist_star_expr ':' func_body_suite
 
 # the TYPE_COMMENT in suites is only parsed for funcdefs,
 # but can't go elsewhere due to ambiguity
