@@ -2665,7 +2665,7 @@ static asdl_seq *
 ast_for_pmatch_body(struct compiling *c, const node *n)
 {
     /*
-     * pmatch_body: NEWLINE [TYPE_COMMENT NEWLINE] INDENT pmatch_case+ DEDENT
+     * pmatch_body: NEWLINE INDENT pmatch_case+ DEDENT
      * pmatch_case: testlist_star_expr ':' func_body_suite
      */
 
@@ -2726,8 +2726,6 @@ ast_for_atom_expr(struct compiling *c, const node *n)
         }
         start = 1;
         assert(nch > 1);
-    } else if (TYPE(CHILD(n, 0)) == pmatch_expr) {
-        return ast_for_pmatch_expr(c, CHILD(n, 0));
     }
 
     e = ast_for_atom(c, CHILD(n, start));
@@ -2805,8 +2803,8 @@ ast_for_expr(struct compiling *c, const node *n)
 {
     /* handle the full range of simple expressions
        namedexpr_test: test [':=' test]
-       test: or_test ['if' or_test 'else' test] | lambdef
-       test_nocond: or_test | lambdef_nocond
+       test: or_test ['if' or_test 'else' test] | lambdef | pmatch_expr
+       test_nocond: or_test | lambdef_nocond | pmatch_expr
        or_test: and_test ('or' and_test)*
        and_test: not_test ('and' not_test)*
        not_test: 'not' not_test | comparison
@@ -2837,6 +2835,8 @@ ast_for_expr(struct compiling *c, const node *n)
             if (TYPE(CHILD(n, 0)) == lambdef ||
                 TYPE(CHILD(n, 0)) == lambdef_nocond)
                 return ast_for_lambdef(c, CHILD(n, 0));
+            else if (TYPE(CHILD(n, 0)) == pmatch_expr)
+                return ast_for_pmatch_expr(c, CHILD(n, 0));
             else if (NCH(n) > 1)
                 return ast_for_ifexpr(c, n);
             /* Fallthrough */
