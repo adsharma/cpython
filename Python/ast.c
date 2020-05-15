@@ -2699,8 +2699,8 @@ ast_for_pmatch_expr(struct compiling *c, const node *n)
     expr_ty key_expr;
     asdl_seq *body_expr;
     REQ(n, pmatch_expr);
-    assert(NCH(n) == 4);
-    /* pmatch_expr: 'pmatch'  testlist_star_expr ':' pmatch_body */
+    assert(NCH(n) == 5);
+    /* pmatch_expr: 'pmatch'  testlist_star_expr ':' pmatch_body SEMI */
 
     key_expr = ast_for_testlist(c, CHILD(n, 1));
     body_expr = ast_for_pmatch_body(c, CHILD(n, 3));

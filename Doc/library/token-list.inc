@@ -201,6 +201,10 @@
 
    Token value for ``":="``.
 
+.. data:: DSEMI
+
+   Token value for ``";;"``.
+
 .. data:: OP
 
 .. data:: AWAIT

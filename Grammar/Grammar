@@ -195,7 +195,7 @@ encoding_decl: NAME
 yield_expr: 'yield' [yield_arg]
 yield_arg: 'from' test | testlist_star_expr
 
-pmatch_expr: 'pmatch'  testlist_star_expr ':' pmatch_body
+pmatch_expr: 'pmatch'  testlist_star_expr ':' pmatch_body DSEMI
 pmatch_body: NEWLINE INDENT pmatch_case+ DEDENT
 pmatch_case: testlist_star_expr ':' suite
 
